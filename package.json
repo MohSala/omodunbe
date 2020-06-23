@@ -1,0 +1,54 @@
+{
+  "name": "prod-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "amqplib": "0.5.5",
+    "aws-sdk": "2.638.0",
+    "axios": "0.19.2",
+    "bcryptjs": "2.4.3",
+    "bluebird": "3.7.2",
+    "body-parser": "1.19.0",
+    "chai-things": "0.2.0",
+    "chance": "1.1.4",
+    "cors": "2.8.5",
+    "dotenv": "8.2.0",
+    "express": "4.17.1",
+    "jsonwebtoken": "8.5.1",
+    "mongoose": "5.8.1",
+    "multer": "1.4.2",
+    "multer-s3": "2.9.0",
+    "pg": "7.18.2",
+    "redis": "2.8.0",
+    "sequelize": "5.21.5",
+    "sinon": "9.0.0",
+    "supertest": "4.0.2",
+    "uuid": "7.0.2",
+    "winston": "3.2.1",
+    "winston-daily-rotate-file": "4.4.0"
+  },
+  "devDependencies": {
+    "@types/express": "4.17.2",
+    "@types/mocha": "5.2.7",
+    "chai": "4.2.0",
+    "chai-http": "4.3.0",
+    "mocha": "6.2.2",
+    "tslint": "5.20.1",
+    "typescript": "3.7.3"
+  },
+  "scripts": {
+    "start": "tsc && node dist/app/app.js",
+    "test": "tsc && mocha dist/test/index.js --exit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wordaddict/API-project.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wordaddict/API-project/issues"
+  },
+  "homepage": "https://github.com/wordaddict/API-project#readme"
+}
