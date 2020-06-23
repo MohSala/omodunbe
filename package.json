@@ -39,7 +39,7 @@
   },
   "scripts": {
     "start": "ts-node app/app.ts",
-    "heroku-postbuild": "npm install ts-node",
+    "heroku-postbuild": "npm install ts-node typescript",
     "test": "tsc && mocha dist/test/index.js --exit"
   },
   "repository": {
