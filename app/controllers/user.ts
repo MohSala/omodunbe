@@ -6,12 +6,24 @@ import redis from "redis";
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 import bluebird from "bluebird"
+const connectionParams = {
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASSWORD,
+    db: 10
+}
 bluebird.promisifyAll(redis.RedisClient.prototype);
 bluebird.promisifyAll(redis.Multi.prototype);
-const client = redis.createClient();
+const client = redis.createClient(connectionParams);
 const upload = require("../services/uploadService")
 import pagination from "../services/pagination"
 
+client.on('connect', () => {
+    console.log('redis client connected successfully')
+})
+client.on("error", (err) => {
+    console.log("Error connecting to redis" + err);
+});
 
 export class UserController {
     logger: any;
