@@ -1,6 +1,5 @@
-# ODA USER_SERVICE_API
+# TherapyBox USER_SERVICE_API
 
-USER SERVICE FOR ODA API
 
 ## Requirements and Installation
 
