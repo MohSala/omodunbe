@@ -38,8 +38,8 @@
     "typescript": "3.7.3"
   },
   "scripts": {
-    "start": "tsc && node dist/app/app.js",
-    "heroku-postbuild": "npm install -g typescript",
+    "start": "ts-node app/app.ts",
+    "heroku-postbuild": "npm install",
     "test": "tsc && mocha dist/test/index.js --exit"
   },
   "repository": {
