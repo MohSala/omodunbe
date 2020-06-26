@@ -1,4 +1,5 @@
 import { UserPayload, userModel } from "../model/user"
+import { TaskPayload, taskModel } from "../model/task"
 import axios from "axios"
 import { config } from "../config/config"
 export class UserServices {
@@ -58,5 +59,25 @@ export class UserServices {
 
     async addEmailAddress(email: string, mobile: string) {
         return userModel.findOneAndUpdate({ mobile }, { email }, { new: true }).exec();
+    }
+
+
+    /**
+     * 
+     * TASK SERVICE LIVES HERE
+     */
+
+    async createTask(param: any) {
+        const { merchant_id, staff_id, task_type, task_subtype, price, status, scheduled_date } = param;
+        const createTask = new taskModel({
+            merchant_id,
+            staff_id,
+            task_type,
+            task_subtype,
+            price,
+            status,
+            scheduled_date
+        })
+        return createTask.save();
     }
 };

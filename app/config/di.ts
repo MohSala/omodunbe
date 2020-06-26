@@ -9,6 +9,7 @@ require('winston-daily-rotate-file');
 import { UserServices } from '../services/user';
 import { UserController } from '../controllers/user';
 import { OtpService } from "../services/otpService"
+import { TransactionServices } from "../services/transactionService"
 
 
 const mongoose = require('mongoose');
@@ -70,6 +71,10 @@ serviceLocator.register('otpService', (servicelocator) => {
   return new OtpService(logger);
 });
 
+serviceLocator.register('transactionService', () => {
+  return new TransactionServices();
+});
+
 /**
  * Creates an instance of the User Service
  */
@@ -85,9 +90,10 @@ serviceLocator.register('userService', (servicelocator) => {
 serviceLocator.register('userController', (servicelocator) => {
   const logger = servicelocator.get('logger');
   const userService = servicelocator.get('userService');
-  const otpService = servicelocator.get('otpService')
+  const otpService = servicelocator.get('otpService');
+  const transactionService = servicelocator.get('transactionService')
   return new UserController(
-    logger, userService, otpService
+    logger, userService, otpService, transactionService
   );
 });
 

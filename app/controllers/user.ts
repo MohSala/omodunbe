@@ -17,6 +17,9 @@ bluebird.promisifyAll(redis.Multi.prototype);
 const client = redis.createClient(connectionParams);
 const upload = require("../services/uploadService")
 import pagination from "../services/pagination"
+import { TaskPayload } from '../model/task';
+import { TransactionPayload } from '../model/transaction';
+import { WalletPayload } from '../model/wallet';
 
 client.on('connect', () => {
     console.log('redis client connected successfully')
@@ -29,16 +32,18 @@ export class UserController {
     logger: any;
     userService: any;
     otpService: any;
+    transactionService: any;
     /**
      *
      * @param {*} logger Logger Object
      * @param {*} userService userService Object
      * @param {*} otpService otpService object
      */
-    constructor(logger: any, userService: any, otpService: any) {
+    constructor(logger: any, userService: any, otpService: any, transactionService: any) {
         this.logger = logger;
         this.userService = userService;
         this.otpService = otpService;
+        this.transactionService = transactionService;
     }
 
 
@@ -74,67 +79,140 @@ export class UserController {
             }, HTTPStatus.BAD_REQUEST);
         }
     }
-    async merchantSignUp(req: any, res: any) {
-        let { fullName, email, password, mobile, referer } = req.body;
-        if (!fullName || !email || !password || !mobile) {
-            return failure(res, { message: 'Please fill in all required fields' },
-                HTTPStatus.BAD_REQUEST);
-        }
-        const existingUserRecord = await this.userService.findUser(mobile);
-        if (existingUserRecord != null) {
-            return failure(res, { message: 'This Merchant already exists' },
-                HTTPStatus.BAD_REQUEST);
-        }
-        const userRecordWithEmail: UserPayload = await this.userService.findOne(email)
-        if (userRecordWithEmail != null) {
-            return failure(res, { message: 'This Merchant already exists' },
-                HTTPStatus.BAD_REQUEST);
-        }
-        try {
-            let param = {
-                fullName, email, password, mobile, referer
-            }
 
-            try {
-                const salt: String = await bcrypt.genSalt(10);
-                const hash: String = await bcrypt.hash(param.password, salt)
-                param.password = hash
-                const data = await this.userService.saveNewMerchant(param)
-                // Generate code and add to cache
-                let code = Math.floor(Math.random() * 90000) + 10000;
-                client.set(mobile, code);
-                client.expire(mobile, 300);
-                let message = `Activation code for ODA: ${code}.`;
-                this.otpService.sendOtpToUser(message, "+234" + mobile.slice(1))
-                const payload = {
-                    fullName: data.fullName,
-                    email: data.email,
-                    mobile: data.mobile,
-                    id: data._id,
-                    userType: data.userType
-                }
-                const token = await jwt.sign(payload, config.secretKey, { expiresIn: '14d' })
-                const createUserWallet = await this.userService.createUserWallet(data._id, token);
-                this.logger.info(createUserWallet.data.message, createUserWallet.data);
-                // Push user Id to Queue for referral system
-                const queue = 'referralGeneratorJobs'
-                return success(res, {
-                    message: `Merchant Created Successfully,otp code is ${code}`,
-                    response: { user: data, token },
-                }, HTTPStatus.OK);
-            } catch (error) {
-                this.logger.info("Error from signing token ", error)
-                return failure(res, {
-                    message: 'Sorry an error occured',
-                }, HTTPStatus.BAD_REQUEST);
+    async registerTask(req: any, res: any) {
+        const {
+            merchant_id,
+            staff_id,
+            task_type,
+            task_subtype,
+            price,
+            status,
+            scheduled_date
+        } = req.body;
+        if (!merchant_id || !staff_id || !task_subtype || !task_type || !price || !status || !scheduled_date) {
+            return failure(res, { message: 'Kindly add all required fields' },
+                HTTPStatus.BAD_REQUEST);
+        }
+
+        try {
+            const param = {
+                merchant_id,
+                staff_id,
+                task_type,
+                task_subtype,
+                price,
+                status,
+                scheduled_date
             }
+            const data: TaskPayload = await this.userService.createTask(param);
+            return success(res, {
+                message: 'Task Created Successfully',
+                response: data
+            }, HTTPStatus.OK);
         } catch (error) {
-            this.logger.info("Error Occured during signup ", error)
+            this.logger.info("Error from checking task ", error)
             return failure(res, {
-                message: 'Sorry an internal server error occured',
+                message: 'Sorry an error occured while creating task',
             }, HTTPStatus.INTERNAL_SERVER_ERROR);
         }
 
+    }
+
+    async createCreditTransaction(req: any, res: any) {
+        const { description, walletId, mobile, amount, reference } = req.body;
+        if (!description || !walletId || !mobile || !amount || !reference) {
+            return failure(res, { message: 'Kindly add all required fields' },
+                HTTPStatus.BAD_REQUEST);
+        }
+        try {
+            const param = {
+                description, walletId, amount, mobile, reference
+            }
+            const createCreditTransaction: TransactionPayload = await this.transactionService.registerCreditTransaction(param);
+            if (createCreditTransaction) {
+                const wallet = await this.transactionService.findWallet(mobile);
+                if (wallet) {
+                    wallet.availableBalance += amount * 100;
+                    await wallet.save();
+                    return success(res, {
+                        message: 'Transaction Created Successfully',
+                        response: createCreditTransaction
+                    }, HTTPStatus.OK);
+                }
+                else {
+                    return failure(res, { message: 'User Wallet not found' },
+                        HTTPStatus.BAD_REQUEST);
+                }
+            }
+            else {
+                return failure(res, { message: 'Transaction could not be created' },
+                    HTTPStatus.BAD_REQUEST);
+            }
+        } catch (error) {
+            this.logger.info("Error from creating credit transaction ", error)
+            return failure(res, {
+                message: 'Sorry an error occured while creating a credit transaction ',
+            }, HTTPStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    async getWalletBalance(req: any, res: any) {
+        const { mobile } = req.query;
+        if (!mobile) {
+            return failure(res, {
+                message: 'Please fill in Mobile',
+            }, HTTPStatus.BAD_REQUEST);
+        }
+
+        try {
+            const data: WalletPayload = await this.transactionService.findWallet(mobile);
+            if (data) {
+                return success(res, {
+                    message: `Wallet Returned Successfully`,
+                    response: data,
+                }, HTTPStatus.OK);
+            }
+            else {
+                return failure(res, {
+                    message: 'Wallet not found for User',
+                }, HTTPStatus.BAD_REQUEST);
+            }
+        } catch (error) {
+            this.logger.info("Error from retrieving wallet ", error)
+            return failure(res, {
+                message: 'Sorry an error occured while retrieving user wallet ',
+            }, HTTPStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    async getUserTransactions(req: any, res: any) {
+        const { walletId } = req.query;
+        if (!walletId) {
+            return failure(res, {
+                message: 'Please fill in walletId',
+            }, HTTPStatus.BAD_REQUEST);
+        }
+
+        try {
+            const data: TransactionPayload = await this.transactionService.getUserTransactions(walletId);
+            if (data) {
+                return success(res, {
+                    message: `Transaction data Returned Successfully`,
+                    response: data,
+                }, HTTPStatus.OK);
+            }
+            else {
+                return failure(res, {
+                    message: 'No Transaction data found',
+                }, HTTPStatus.BAD_REQUEST);
+            }
+        } catch (error) {
+            this.logger.info("Error from retrieving transaction data ", error)
+            return failure(res, {
+                message: 'Sorry an error occured while retrieving user transaction data ',
+            }, HTTPStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     async verifyUser(req: any, res: any) {
@@ -175,6 +253,9 @@ export class UserController {
         else {
             try {
                 const data: UserPayload = await this.userService.addEmailAddress(email, mobile);
+                if (data) {
+                    await this.transactionService.createWallet(mobile);
+                }
                 return success(res, {
                     message: 'User Email Added Successfully',
                     response: data
@@ -224,12 +305,13 @@ export class UserController {
 
     async login(req: any, res: any) {
         let { mobile, password } = req.body;
+        if (!mobile || !password) {
+            return failure(res, {
+                message: 'Please fill in Mobile and Password Field',
+            }, HTTPStatus.BAD_REQUEST);
+        }
         try {
-            if (!mobile || !password) {
-                return failure(res, {
-                    message: 'Please fill in Mobile and Password Field',
-                }, HTTPStatus.BAD_REQUEST);
-            }
+
             const user: UserPayload = await this.userService.findUser(mobile);
             if (!user) {
                 return failure(res, { message: 'No user found' },
@@ -241,18 +323,12 @@ export class UserController {
                     HTTPStatus.BAD_REQUEST);
             }
             else {
-                const payload = {
-                    mobile: user.mobile,
-                }
                 const token = await jwt.sign({ mobile }, config.secretKey, { expiresIn: '0' })
                 return success(res, {
                     message: 'User Signed in Successfully',
                     response: { user, token },
                 }, HTTPStatus.OK);
-
             }
-
-
         } catch (error) {
             this.logger.info("Error Occured during signin ", error)
             return failure(res, {

@@ -17,6 +17,18 @@ userRouter.post('/checkUser', (req, res) => {
     return userController.checkIfUserExists(req, res);
 })
 
+userRouter.get('/wallet', (req, res) => {
+    return userController.getWalletBalance(req, res);
+})
+
+userRouter.get('/transactions', (req, res) => {
+    return userController.getUserTransactions(req, res);
+})
+
+userRouter.post('/creditTransaction', (req, res) => {
+    return userController.createCreditTransaction(req, res);
+})
+
 userRouter.post('/addEmailAddress', (req, res) => {
     return userController.updateEmailAddress(req, res);
 })
