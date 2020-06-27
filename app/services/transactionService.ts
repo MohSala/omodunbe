@@ -19,7 +19,7 @@ export class TransactionServices {
     }
 
     public async getUserTransactions(walletId: any) {
-        return transactionModel.find({ walletId }).exec();
+        return transactionModel.find({ walletId }).sort({ updatedAt: -1 }).exec();
     }
 
     public async createWallet(mobile: any) {
