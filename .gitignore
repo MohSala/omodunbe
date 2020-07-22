@@ -2,3 +2,4 @@
 /logs
 /dist
 .env
+/coverage

@@ -1,6 +1,4 @@
 import { config } from "../config/config"
-import { serviceLocate } from '../config/di';
-import fs from "fs";
 import AWS from "aws-sdk";
 const multer = require('multer')
 const multerS3 = require('multer-s3')

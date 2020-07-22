@@ -1,0 +1,28 @@
+export const locations = () => {
+  return [
+    "Agege",
+    "Ajeromi-Ifelodun",
+    "Ajah",
+    "Alimosho",
+    "Amuwo-Odofin",
+    "Badagry",
+    "Apapa",
+    "Epe",
+    "Eti Osa",
+    "Ibeju-Lekki",
+    "Ifako-Ijaiye",
+    "Ikeja",
+    "Ikorodu",
+    "Kosofe",
+    "Lagos Island",
+    "Lekki",
+    "Mushin",
+    "Lagos Mainland",
+    "Ojo",
+    "Oshodi-Isolo",
+    "Shomolu",
+    "Surulere",
+    "VGC",
+    "Victoria Island",
+  ];
+};

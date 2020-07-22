@@ -22,6 +22,10 @@ export class TransactionServices {
         return transactionModel.find({ walletId }).sort({ updatedAt: -1 }).exec();
     }
 
+    public async getLatestActivity(walletId: any) {
+        return transactionModel.find({ walletId }).sort({ updatedAt: -1 }).limit(4).exec();
+    }
+
     public async createWallet(mobile: any) {
         const createWallet = new walletModel({
             mobile

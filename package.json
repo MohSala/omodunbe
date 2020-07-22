@@ -15,14 +15,17 @@
     "cors": "2.8.5",
     "dotenv": "8.2.0",
     "express": "4.17.1",
+    "faker": "^4.1.0",
+    "jest": "^26.1.0",
     "jsonwebtoken": "8.5.1",
     "mongoose": "5.8.1",
     "multer": "1.4.2",
     "multer-s3": "2.9.0",
     "pg": "7.18.2",
     "redis": "2.8.0",
+    "request": "^2.88.2",
     "sequelize": "5.21.5",
-    "sinon": "9.0.0",
+    "sinon": "^9.0.0",
     "supertest": "4.0.2",
     "ts-node": "^8.10.2",
     "uuid": "7.0.2",
@@ -34,14 +37,17 @@
     "@types/mocha": "5.2.7",
     "chai": "4.2.0",
     "chai-http": "4.3.0",
+    "istanbul": "^0.4.5",
     "mocha": "6.2.2",
     "tslint": "5.20.1",
     "typescript": "^3.7.3"
   },
   "scripts": {
     "start": "ts-node app/app.ts",
+    "dev": "ts-node app/app.ts",
     "heroku-postbuild": "npm install typescript ts-node",
-    "test": "tsc && mocha dist/test/index.js --exit"
+    "test": "tsc && mocha dist/test/index.spec.js --exit",
+    "test-coverage": "jest --coverage"
   },
   "repository": {
     "type": "git",
