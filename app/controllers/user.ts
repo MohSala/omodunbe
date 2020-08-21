@@ -85,6 +85,75 @@ export class UserController {
     }
   }
 
+  async merchantSignUp(req: any, res: any) {
+    let { fullName, email, password, mobile } = req.body;
+    if (!fullName || !email || !password || !mobile) {
+      return failure(res, { message: 'Please fill in all required fields' },
+        HTTPStatus.BAD_REQUEST);
+    }
+    if (mobile.length !== 11) {
+      return failure(res, { message: 'Mobile number must be 11 digits' },
+        HTTPStatus.BAD_REQUEST);
+    }
+    const existingUserRecord = await this.userService.findUser(mobile);
+    if (existingUserRecord != null) {
+      return failure(res, { message: 'This Merchant already exists' },
+        HTTPStatus.BAD_REQUEST);
+    }
+    const userRecordWithEmail: UserPayload = await this.userService.findOne(email)
+    if (userRecordWithEmail != null) {
+      return failure(res, { message: 'This Merchant already exists' },
+        HTTPStatus.BAD_REQUEST);
+    }
+    try {
+      let param = {
+        fullName, email, password, mobile
+      }
+
+      try {
+        const salt: String = await bcrypt.genSalt(10);
+        const hash: String = await bcrypt.hash(param.password, salt)
+        param.password = hash
+        const data = await this.userService.saveNewMerchant(param)
+        if (data) {
+          let code = Math.floor(Math.random() * 90000) + 10000;
+          client.set(mobile, code);
+          client.expire(mobile, 300);
+          let message = `Activation code for ODA: ${code}.`;
+          this.otpService.sendOtpToUser(message, "+234" + mobile.slice(1))
+          const payload = {
+            fullName: data.fullName,
+            email: data.email,
+            mobile: data.mobile,
+            id: data._id,
+          }
+          const token = await jwt.sign(payload, config.secretKey, {})
+          return success(res, {
+            message: `Merchant Created Successfully,otp code is ${code}`,
+            response: { user: data, token },
+          }, HTTPStatus.OK);
+        }
+        else {
+          this.logger.info("Error from creating user")
+          return failure(res, {
+            message: 'Sorry an user could not be created',
+          }, HTTPStatus.BAD_REQUEST);
+        }
+      } catch (error) {
+        this.logger.info("Error from signing token ", error)
+        return failure(res, {
+          message: 'Sorry an error occured',
+        }, HTTPStatus.BAD_REQUEST);
+      }
+    } catch (error) {
+      this.logger.info("Error Occured during signup ", error)
+      return failure(res, {
+        message: 'Sorry an internal server error occured',
+      }, HTTPStatus.INTERNAL_SERVER_ERROR);
+    }
+
+  }
+
   async registerTask(req: any, res: any) {
     const {
       mobile,
@@ -587,7 +656,6 @@ export class UserController {
         email: user.email,
         mobile: user.mobile,
         id: user._id,
-        userType: user.userType,
       };
       const token = await jwt.sign(
         payload,

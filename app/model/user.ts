@@ -7,10 +7,7 @@ export interface UserPayload {
   email: string;
   mobile: number;
   password: string;
-  userType: string;
-  active: boolean;
   otpVerified: boolean;
-  status?: string;
   isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -42,16 +39,6 @@ const userSchema = new Schema(
       default: false
     },
 
-    status: {
-      type: String,
-      enum: ['APPROVED', 'DISAPPROVED', 'PENDING'],
-      default: 'PENDING'
-    },
-
-    active: {
-      type: Boolean,
-      default: false
-    },
     isDeleted: {
       type: Boolean,
       default: false

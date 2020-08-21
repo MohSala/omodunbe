@@ -33,6 +33,17 @@ export class UserServices {
       .exec();
   }
 
+  public async saveNewMerchant(param: any) {
+    const { fullName, email, password, mobile, referer } = param;
+    const newMerchantRecord = new userModel({
+      fullName,
+      email,
+      password,
+      mobile,
+    })
+    return newMerchantRecord.save();
+  }
+
   public async verifyUser(mobile: string) {
     return await userModel.findOneAndUpdate(
       { mobile },
